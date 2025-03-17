@@ -11,7 +11,7 @@ def get_hostname(ip):
     except socket.herror:
         return ip
 
-def traceroute(dest_name, max_hops=30, packets_per_hop=5, resolve_hostnames=False, timeout=10.0):
+def traceroute(dest_name, max_hops=30, packets_per_hop=3, resolve_hostnames=False, timeout=10.0):
     try:
         dest_addr = socket.gethostbyname(dest_name)
     except socket.gaierror as e:
@@ -72,7 +72,13 @@ def traceroute(dest_name, max_hops=30, packets_per_hop=5, resolve_hostnames=Fals
 
             times_str = ' '.join(f"{t:.2f} ms" if isinstance(t, float) else t for t in times)
             if current_addr:
-                node_info = current_addr if not resolve_hostnames else get_hostname(current_addr)
+                # Всегда пытаемся получить доменное имя
+                hostname = get_hostname(current_addr)
+                # Если доменное имя отличается от IP, показываем оба (как в traceroute)
+                if hostname != current_addr:
+                    node_info = f"{hostname} ({current_addr})"
+                else:
+                    node_info = current_addr
                 print(f"{ttl:2d}    {times_str}    {node_info}")
             else:
                 print(f"{ttl:2d}    {times_str}")
@@ -90,7 +96,7 @@ if __name__ == "__main__":
         print("Использование: python traceroute.py <host> [-r] [-h <max_hops>]")
         sys.exit(1)
     dest = sys.argv[1]
-    resolve_hostnames = '-r' in sys.argv
+    resolve_hostnames = '-r' in sys.argv  # Этот флаг теперь не нужен, но оставим для совместимости
     max_hops = 15
     if '-h' in sys.argv:
         try:
